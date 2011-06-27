@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <title>WebSocket Test</title>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" ></script>
+        <script language='javascript'>
+
+            $(document).ready(function() {
+                var ws = new WebSocket("ws://localhost:9999/test");
+                ws.onmessage = function(evt) {
+                    $('#output').append(evt.data+'<br />');
+                }
+                ws.onopen = function(evt) {
+                    $('#conn_status').html('<b>Connected</b>');
+                }
+                ws.onerror = function(evt) {
+                    $('#conn_status').html('<b>Error</b>');
+                }
+                ws.onclose = function(evt) {
+                    $('#conn_status').html('<b>Closed</b>');
+                }
+            });
+
+        </script>
+
+    </head>
+    <body>
+        <h1>WebSocket Test</h1>
+        <div id="conn_status">Not Connected</div>
+        <div id="output"></div>
+    </body>
+</html>
+
