@@ -5,6 +5,8 @@
 
 # Modified from original in: http://mumrah.posterous.com/websockets-in-python
 
+__version__ = '0.0.1'
+
 import select
 import struct
 import socket
