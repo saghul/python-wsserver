@@ -1,0 +1,3 @@
+recursive-include test README.markdown *.html *.py
+include TODO
+
