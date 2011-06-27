@@ -1,0 +1,9 @@
+
+- SSL support
+- Flash profile support
+- Implement latest standard. Inspiration:
+    * https://github.com/kanaka/websockify
+    * http://code.google.com/p/pywebsocket/
+    * https://github.com/rlotun/txWebSocket
+- Multiple handlers?
+
