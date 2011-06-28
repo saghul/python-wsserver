@@ -156,15 +156,16 @@ class WSClientSocket(object):
         return True
 
     def message_received(self, data):
-        print 'Message received: ',data
+        pass
 
 
 class WebSocketServer(Thread):
+    client_cls = WSClientSocket
+    handler = '/'
 
-    def __init__(self, port, address='', handler='/'):
+    def __init__(self, port, address=''):
         self.server = WSServerSocket(address, port)
         self.fd_map = { self.server.fileno(): self.server }
-        self.handler = handler
         self._poller = select.poll()
         self._poller.register(self.server, READ_ONLY)
         self._pipe = os.pipe()
@@ -193,7 +194,7 @@ class WebSocketServer(Thread):
                     # Ready to read
                     if socket is self.server:
                         sock, addr = socket.accept()
-                        client = WSClientSocket(sock, self.handler)
+                        client = self.client_cls(sock, self.handler)
                         self.fd_map[client.fileno()] = client
                         self._poller.register(client, READ_WRITE)
                     else:
