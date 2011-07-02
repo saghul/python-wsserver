@@ -44,10 +44,14 @@ class WSServerSocket(object):
         self._socket.close()
 
 
+class WSClientClose(object):
+    pass
+
 class WSClientSocket(object):
     _digit_re = re.compile(r'[^0-9]')
     _spaces_re = re.compile(r'\s')
     _req_line_re = re.compile('^GET (?P<handler>.*) .*\\r\\n')
+    _flash_policy_response = """<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>\n"""
     _handshake = (
         "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
         "Upgrade: WebSocket\r\n"
@@ -58,9 +62,11 @@ class WSClientSocket(object):
         "Sec-Websocket-Location: ws://%(address)s:%(port)s%(handler)s\r\n"
         "\r\n"
     )
+
     def __init__(self, sock, handler):
         self._socket = sock
         self._socket.setblocking(0)
+        self.closing = False
         self.handler = handler
         self.handshaken = False
         self.write_queue = Queue.Queue()
@@ -88,13 +94,22 @@ class WSClientSocket(object):
     def queue_send(self, data):
         self._queue_send('\x00%s\xff' % data)
 
+    def queue_close(self):
+        self._queue_send(WSClientClose)
+
     def data_received(self, data):
+        if self.closing:
+            return
         if not self.handshaken:
             if data.startswith('GET'):
                 match = self._req_line_re.match(data)
                 if not (match and match.groupdict()['handler'] == self.handler):
                     self.close()
                     return
+            elif data.startswith('<policy-file-request/>'):
+                self._queue_send(self._flash_policy_response)
+                self.queue_close()
+                return
             self.headers += data
             if self.headers.find('\r\n\r\n') != -1:
                 parts = self.headers.split('\r\n\r\n', 1)
@@ -220,7 +235,10 @@ class WebSocketServer(Thread):
                     except Queue.Empty:
                         pass
                     else:
-                        socket.send(data)
+                        if data is WSClientClose:
+                            socket.close()
+                        else:
+                            socket.send(data)
                 elif flag & select.POLLERR:
                     # Error
                     self.fd_map.pop(fd)
