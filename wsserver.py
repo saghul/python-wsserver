@@ -102,12 +102,15 @@ class WSClientSocket(object):
                 if self.do_handshake(self.headers, parts[1]):
                     self.handshaken = True
         else:
-            self.data += data
-            msgs = self.data.split('\xff')
-            self.data = msgs.pop()
-            for msg in msgs:
-                if msg[0] == '\x00':
-                    self.message_received(msg[1:])
+            if data == '\xff\x00':
+                self.close()
+            else:
+                self.data += data
+                msgs = self.data.split('\xff')
+                self.data = msgs.pop()
+                for msg in msgs:
+                    if msg[0] == '\x00':
+                        self.message_received(msg[1:])
 
     def do_handshake(self, header, key=None):
         part_1 = part_2 = origin = None
