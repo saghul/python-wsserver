@@ -13,6 +13,7 @@ class MyWSClientSocket(WSClientSocket):
 
     def message_received(self, data):
         print '-- Received data: %s' % data
+        self.queue_send(data)
 
 
 class MyWebSocketServer(WebSocketServer):
