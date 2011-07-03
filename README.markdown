@@ -8,6 +8,10 @@ I needed a single threaded WebSocket server implementation and couldn't find any
 that could quite fit so I wrote my own (sort of) by looking at other WS server
 implementations. In order to multiplex all the connections it uses *poll*.
 
+## Python version compatibility
+WSServer was developed and tested with Python 2.6. It will **not** work on Python 2.5.
+Support for Python 3 has not been tested.
+
 ## Just give me an example
 Have a look at the test/ directory.
 
