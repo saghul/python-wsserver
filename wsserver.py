@@ -157,26 +157,20 @@ class WSClientSocket(object):
             elif name.lower() == "origin":
                 origin = value
         server_ip, server_port = self._socket.getsockname()
+        handshake = self._handshake % {
+            'origin': origin,
+            'address': host,
+            'port': server_port,
+            'handler': self.handler,
+            'protocol': self.protocol
+        }
         if part_1 and part_2:
             challenge = struct.pack('!I', part_1) + struct.pack('!I', part_2) + key
             response = hashlib.md5(challenge).digest()
-            handshake = self._handshake % {
-                'origin': origin,
-                'address': host,
-                'port': server_port,
-                'handler': self.handler,
-                'protocol': self.protocol
-            }
             handshake += response
         else:
-            # Not using challenge-response
-            handshake = self._handshake % {
-                'origin': origin,
-                'address': host,
-                'port': server_port,
-                'handler': self.handler,
-                'protocol': self.protocol
-            }
+            # Warning, not using challenge-response!
+            pass
         self._queue_send(handshake)    # Note the _ !
         return True
 
