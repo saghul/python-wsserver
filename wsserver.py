@@ -8,8 +8,9 @@
 __version__ = '0.0.1'
 
 import select
-import struct
 import socket
+import ssl
+import struct
 import hashlib
 import os
 import re
@@ -57,9 +58,9 @@ class WSClientSocket(object):
         "Upgrade: WebSocket\r\n"
         "Connection: Upgrade\r\n"
         "WebSocket-Origin: %(origin)s\r\n"
-        "WebSocket-Location: ws://%(address)s:%(port)s%(handler)s\r\n"
+        "WebSocket-Location: %(protocol)s://%(address)s:%(port)s%(handler)s\r\n"
         "Sec-Websocket-Origin: %(origin)s\r\n"
-        "Sec-Websocket-Location: ws://%(address)s:%(port)s%(handler)s\r\n"
+        "Sec-Websocket-Location: %(protocol)s://%(address)s:%(port)s%(handler)s\r\n"
         "\r\n"
     )
 
@@ -72,6 +73,10 @@ class WSClientSocket(object):
         self.write_queue = Queue.Queue()
         self.headers = ''
         self.data = ''
+
+    @property
+    def protocol(self):
+        return 'wss' if isinstance(self._socket, ssl.SSLSocket) else 'ws'
 
     def send(self, data):
         self._socket.send(data)
@@ -159,7 +164,8 @@ class WSClientSocket(object):
                 'origin': origin,
                 'address': host,
                 'port': server_port,
-                'handler': self.handler
+                'handler': self.handler,
+                'protocol': self.protocol
             }
             handshake += response
         else:
@@ -168,7 +174,8 @@ class WSClientSocket(object):
                 'origin': origin,
                 'address': host,
                 'port': server_port,
-                'handler': self.handler
+                'handler': self.handler,
+                'protocol': self.protocol
             }
         self._queue_send(handshake)    # Note the _ !
         return True
@@ -181,8 +188,11 @@ class WebSocketServer(Thread):
     client_cls = WSClientSocket
     handler = '/'
 
-    def __init__(self, port, address=''):
+    def __init__(self, port, address='', use_ssl=False, cert=None, key=None):
         self.server = WSServerSocket(address, port)
+        self.use_ssl = use_ssl
+        self.cert = cert
+        self.key = key
         self.fd_map = { self.server.fileno(): self.server }
         self._poller = select.poll()
         self._poller.register(self.server, READ_ONLY)
@@ -212,7 +222,18 @@ class WebSocketServer(Thread):
                     # Ready to read
                     if socket is self.server:
                         sock, addr = socket.accept()
-                        client = self.client_cls(sock, self.handler)
+                        if self.use_ssl:
+                            try:
+                                client_sock = ssl.wrap_socket(sock,
+                                                              server_side=True,
+                                                              certfile=self.cert,
+                                                              keyfile=self.key)
+                            except ssl.SSLError:
+                                sock.close()
+                                continue
+                        else:
+                            client_sock = sock
+                        client = self.client_cls(client_sock, self.handler)
                         self.fd_map[client.fileno()] = client
                         self._poller.register(client, READ_WRITE)
                     else:
