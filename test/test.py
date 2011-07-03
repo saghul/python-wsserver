@@ -6,6 +6,7 @@
 import sys
 sys.path.insert(0, '..')
 
+from optparse import OptionParser
 from wsserver import WebSocketServer, WSClientSocket
 
 
@@ -22,7 +23,15 @@ class MyWebSocketServer(WebSocketServer):
 
 
 if __name__ == '__main__':
-    ws_server = MyWebSocketServer(9999)
+    parser = OptionParser()
+    parser.add_option('--use-ssl', action='store_true', dest='use_ssl', default=False)
+    options, args = parser.parse_args()
+
+    if options.use_ssl:
+        ws_server = MyWebSocketServer(9999, use_ssl=True, cert='cert.pem', key='key.pem')
+    else:
+        ws_server = MyWebSocketServer(9999)
+    print 'Starting WebSocketServer... SSL is %s' % ('enabled' if options.use_ssl else 'disabled')
     ws_server.start()
 
     while True:
