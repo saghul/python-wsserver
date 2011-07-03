@@ -1,6 +1,5 @@
 
-- SSL support
-- Flash profile support
+- Add logging
 - Implement latest standard. Inspiration:
     * https://github.com/kanaka/websockify
     * http://code.google.com/p/pywebsocket/
