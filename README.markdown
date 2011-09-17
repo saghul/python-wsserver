@@ -1,5 +1,11 @@
 # WSServer a simple, single threaded WebSocket server
 
+## Important note!
+This project is now dead. I did have the intention to further develop it, but I no
+longer have enough time and I also found another way to achieve the goal of bridging
+WebSocket with ZeroMQ, which was the reason why I started this. I'll use Tornado + TornadIO
+as described here: http://code.saghul.net/a-zeromq-to-websocket-gateway-take-2
+
 ## Description
 WSServer is a really simple (it does not yet implement all WS variants) WebSocket
 server which runs in a single thread.
